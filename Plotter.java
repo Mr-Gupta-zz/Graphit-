@@ -8,16 +8,17 @@ public class Plotter {
   private int pixelsBetweenNumbers;
   private Plot origin;
   private int plotSize;
-
+  private Plot[] xAndYs;
   Plotter(int[] coeffs, int plotSize, String functionName,
-      int pixelsBetweenNumbers, Point origin){
+      int pixelsBetweenNumbers){
 
     plots = new Plot[plotSize];
     name = functionName;
     this.plotSize = plotSize;
     this.coeffs = coeffs;
     this.pixelsBetweenNumbers = pixelsBetweenNumbers;
-    this.origin = new Plot(origin.x, origin.y);
+    
+    xAndYs = new Plot[plotSize];
 
   }
   //example runPlots(-15, 15);
@@ -33,37 +34,73 @@ public class Plotter {
     double deltaX = width/pixelsBetweenNumbers;
     double increment = deltaX/plotSize; //0.16
     int j = 0;
+
     for(double i = leftMostValue; j < plotSize; i+= increment, j++){
 
-      plots[j] = convertToPanelCoordinate(i, evaluate(i), j); 
-     
-
+      xAndYs[j] = new Plot(i * pixelsBetweenNumbers, evaluate(i)*pixelsBetweenNumbers);
       
+    }
+    return xAndYs;
+  }
+
+
+  public  Plot[] convertToPanelCoordinate(Plot[] relations, Point origin){
+    for(int i = 0; i < relations.length; i++){
+
+
+    int xPlot = (int)( relations[i].getX() + origin.x);
+    int yPlot = (int)( origin.y - relations[i].getY());
+    if(plots[i] ==null){
+      plots[i] = new Plot(xPlot, yPlot);
+    }
+    else {
+      plots[i] = plots[i].modify(xPlot,yPlot);
+    }
+ 
+
     }
     return plots;
   }
 
 
-
-
-
-  private Plot convertToPanelCoordinate(double x, double y, int j)  {
+  Plot convertToPanelCoordinate(double x, double y, int j)  {
      
     
     int xPlot = (int)( x*pixelsBetweenNumbers + origin.getX());
+    //int xPlot = (int) (x * 20  + 300);
 
-    int yPlot = (int)(origin.getY()+evaluate(x)* pixelsBetweenNumbers);
+    
+ //   int yPlot = (int) ((-y * 20) + 300);
+    int yPlot = (int)( origin.getY() - evaluate(x) * pixelsBetweenNumbers);
+
+
     if(plots[j] ==null){
       plots[j] = new Plot(xPlot, yPlot);
     }
     else {
       plots[j] = plots[j].modify(xPlot,yPlot);
-    }
-    System.out.println(new DecimalFormat("#.##").format(x) + ", "
+    } 
+    System.out.println(    new DecimalFormat("#.##").format(x) + ", "
         +  new DecimalFormat("#.##").format(y) + " --> "
-        + xPlot + ", " + yPlot ); 
+        + xPlot + ", " + yPlot );  
     return plots[j];
    
+  } 
+
+  
+
+  
+
+    
+
+
+  public static Plot[] shiftPlots(Point origin, Plot[] plots){
+    for(int i = 0; i < plots.length; i++){
+      plots[i].modify(plots[i].getX() + 
+          origin.x, plots[i].getY() + origin.y);
+    }
+    return plots;
+
   }
 
 
@@ -76,7 +113,7 @@ public class Plotter {
 
     double y = 0;
     for (int i = 0; i < coeffs.length; i++){
-      y = coeffs[i];
+      y = coeffs[i] + (x * y);
 
     }
 

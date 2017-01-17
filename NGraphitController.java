@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 /**
  * GraphitController is a controller for a graphing calc.
  */
@@ -64,9 +65,11 @@ public class NGraphitController extends JPanel implements ActionListener {
   private int[] coEffs;
   boolean doneCoeffs = false;
   boolean isCoeffs =false;
-  private int[] test;  
-  
+  private int[] test; 
+  private int lineSpacing = 40; 
+  private Plot[] plots;
   private Plotter plotter;
+  private Plot[] functions;
 
 
 
@@ -217,7 +220,7 @@ public class NGraphitController extends JPanel implements ActionListener {
         if(success == true) {
 
           //Graphit!
-          //graphit(test);
+          graphit(test);
           repaint();
           isCoeffs = false;
           System.out.println(test);
@@ -258,21 +261,16 @@ public class NGraphitController extends JPanel implements ActionListener {
 
 
 }*/
-private synchronized void graphit(int[] coeffs, Graphics2D g2){
-          g2.drawLine(0, origin.y, getWidth()-300, origin.y);
+private synchronized void graphit(int[] coeffs){
   
-  if(plotter == null){
-    plotter = new Plotter(coeffs, 200, "Polynomial", 20, origin);
-  }
-  //check logic for hor-ver and leftmost-righymost
-  Plot[] plots = plotter.runPlots(-15,15, gc.getWidth());
-  for(int i = 0; i < plots.length-1; i++){
-    System.out.println(plots[i].getX() + " " + plots[i].getY());
-    g2.drawLine(plots[i].getX(), plots[i].getY(),
-        plots[i+1].getX(), plots[i+1].getY());
 
+  if(plotter == null){
+    plotter = new Plotter(coeffs, 200, "Polynomial", lineSpacing);
   }
- System.out.println("gets called though amri 2017"); 
+  System.out.println(-hor + "-hor " + hor +  " :hor");
+  functions = plotter.runPlots(-hor, hor, gc.getWidth());
+  repaint();
+
 }
 
 
@@ -346,25 +344,41 @@ public void paintComponent(Graphics g){
 
   drawGreyLines(g2);
   g.drawString("AMRI AND ISAAC \u00a9", 10, 20);
-      if(test != null){
-        graphit(test, g2);
+      
+      if(functions != null){
+       ////
+       plots = plotter.convertToPanelCoordinate(functions, origin);
+       for(int i = 0; i < plots.length-1; i++){
+         g2.drawLine((int)plots[i].getX(), (int)plots[i].getY(),
+        (int)plots[i+1].getX(), (int)plots[i+1].getY());
+        System.out.println("plots[" + i + "].x = "  + plots[i].getX() +
+            " && plots[" + i + "].y = " + plots[i].getY());
+        
+       }
+       
+       
+       
+       
+       ////
 
       }
 }
 
+
 public synchronized void drawGreyLines(Graphics2D g2) {
 
   if(oldW == gc.getWidth() && oldH == gc.getHeight()) {
-
+    
     //for initial positions of the grey line, shall the viewport be panned
-    j = (gc.getHeight() + origin.y)%20;
-    i = (gc.getWidth() + origin.x)%20;
-
-    for(; i < gc.getWidth() && j<gc.getHeight(); i+=20, j+=20){
-
+    //j is the position of the first y coordinate for the first horizontal line
+    //i is the postition of the frirst x coordinate for the first vertical line 
+    j = (gc.getHeight() + origin.y)%lineSpacing;
+    i = (gc.getWidth() + origin.x)%lineSpacing;
+    System.out.println(j + " =j " + i + " = i" );
+    for(; i < gc.getWidth() && j<gc.getHeight(); i+=lineSpacing, j+=lineSpacing){
       //the number labels on the axis       
-      hor = (i - origin.x)/20;
-      ver = -(j - origin.y)/20;
+      hor = (i - origin.x)/lineSpacing;
+      ver = -(j - origin.y)/lineSpacing;
 
       g2.setColor(Color.LIGHT_GRAY);
       g2.drawLine(i, 0, i ,gc.getHeight());
@@ -374,9 +388,9 @@ public synchronized void drawGreyLines(Graphics2D g2) {
       g2.setFont(new Font("TimesRoman", Font.PLAIN, 10));
 
       //counter to count for the pixel xhange after being dragged
-      g2.drawString("" + hor, i + counter_X%20, origin.y+20);
+      g2.drawString("" + hor, i + counter_X%lineSpacing, origin.y+lineSpacing);
 
-      g2.drawString("" + ver, origin.x-20,j + counter_Y%20);
+      g2.drawString("" + ver, origin.x-lineSpacing,j + counter_Y%lineSpacing);
 
     }
 
@@ -386,7 +400,7 @@ public synchronized void drawGreyLines(Graphics2D g2) {
 
   else {
 
-    for(; i < gc.getWidth() && j<gc.getHeight(); i+=20, j+=20){
+    for(; i < gc.getWidth() && j<gc.getHeight(); i+=lineSpacing, j+=lineSpacing){
 
 
       g2.setColor(Color.LIGHT_GRAY);
